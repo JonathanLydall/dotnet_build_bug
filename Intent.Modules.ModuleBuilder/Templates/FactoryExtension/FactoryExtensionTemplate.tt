@@ -1,0 +1,56 @@
+<#@ template language="C#" inherits="CSharpTemplateBase<Intent.ModuleBuilder.Api.FactoryExtensionModel>" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="Intent.Modules.Common" #>
+<#@ import namespace="Intent.Modules.Common.Templates" #>
+<#@ import namespace="Intent.Modules.Common.CSharp.Templates" #>
+<#@ import namespace="Intent.Templates" #>
+<#@ import namespace="Intent.Metadata.Models" #>
+<#@ import namespace="Intent.ModuleBuilder.Api" #>
+using Intent.Engine;
+using Intent.Modules.Common;
+using Intent.Modules.Common.Plugins;
+using Intent.Plugins.FactoryExtensions;
+
+[assembly: DefaultIntentManaged(Mode.Fully)]
+
+namespace <#= Namespace #>
+{
+    [IntentManaged(Mode.Fully, Body = Mode.Merge)]
+    public class <#= ClassName #> : FactoryExtensionBase
+    {
+        public override string Id => "<#= GetId() #>";
+
+        [IntentManaged(Mode.Ignore)]
+        public override int Order => 0;
+
+        /// <summary>
+        /// This is an example override which would extend the
+        /// <see cref="ExecutionLifeCycleSteps.AfterTemplateRegistrations"/> phase of the Software Factory execution.
+        /// See <see cref="FactoryExtensionBase"/> for all available overrides.
+        /// </summary>
+        /// <remarks>
+        /// It is safe to update or delete this method.
+        /// </remarks>
+        [IntentInitialGen]
+        protected override void OnAfterTemplateRegistrations(IApplication application)
+        {
+            // Your custom logic here.
+        }
+
+        /// <summary>
+        /// This is an example override which would extend the
+        /// <see cref="ExecutionLifeCycleSteps.BeforeTemplateExecution"/> phase of the Software Factory execution.
+        /// See <see cref="FactoryExtensionBase"/> for all available overrides.
+        /// </summary>
+        /// <remarks>
+        /// It is safe to update or delete this method.
+        /// </remarks>
+        [IntentInitialGen]
+        protected override void OnBeforeTemplateExecution(IApplication application)
+        {
+            // Your custom logic here.
+        }
+    }
+}

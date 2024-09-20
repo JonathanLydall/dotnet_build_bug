@@ -1,0 +1,245 @@
+<#@ template language="C#" inherits="CSharpTemplateBase<Intent.ModuleBuilder.Api.AssociationSettingsModel>" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="Intent.Modules.Common" #>
+<#@ import namespace="Intent.Modules.Common.Templates" #>
+<#@ import namespace="Intent.Modules.Common.CSharp.Templates" #>
+<#@ import namespace="Intent.Templates" #>
+<#@ import namespace="Intent.Metadata.Models" #>
+<#@ import namespace="Intent.ModuleBuilder.Api" #>
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Intent.Metadata.Models;
+using Intent.Modules.Common;
+
+[assembly: DefaultIntentManaged(Mode.Fully)]
+
+namespace <#= Namespace #>
+{
+    [IntentManaged(Mode.Fully, Signature = Mode.Fully)]
+    public class <#= ClassName #> : IMetadataModel
+    {
+        public const string SpecializationType = "<#= Model.Name #>";
+        public const string SpecializationTypeId = "<#= Model.Id #>";
+        protected readonly IAssociation _association;
+        protected <#=AssociationSourceEndClassName #> _sourceEnd;
+        protected <#=AssociationTargetEndClassName #> _targetEnd;
+
+        public <#= ClassName #>(IAssociation association, string requiredType = SpecializationType)
+        {
+            if (!requiredType.Equals(association.SpecializationType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception($"Cannot create a '{GetType().Name}' from association with specialization type '{association.SpecializationType}'. Must be of type '{SpecializationType}'");
+            }
+            _association = association;
+        }
+
+        public static <#= ClassName #> CreateFromEnd(IAssociationEnd associationEnd)
+        {
+            var association = new <#= ClassName #>(associationEnd.Association);
+            return association;
+        }
+
+        public string Id => _association.Id;
+        
+        public <#=AssociationSourceEndClassName #> SourceEnd => _sourceEnd ?? (_sourceEnd = new <#=AssociationSourceEndClassName #>(_association.SourceEnd, this));
+
+        public <#=AssociationTargetEndClassName #> TargetEnd => _targetEnd ?? (_targetEnd = new <#=AssociationTargetEndClassName #>(_association.TargetEnd, this));
+
+        public IAssociation InternalAssociation => _association;
+        
+        public override string ToString()
+        {
+            return _association.ToString();
+        }
+
+        public bool Equals(<#= ClassName #> other)
+        {
+            return Equals(_association, other?._association);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((<#= ClassName #>)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (_association != null ? _association.GetHashCode() : 0);
+        }
+    }
+
+    [IntentManaged(Mode.Fully)]
+    public class <#=AssociationSourceEndClassName #> : <#=AssociationEndClassName #>
+    {
+        public const string SpecializationTypeId = "<#= Model.SourceEnd.Id #>";
+        public const string SpecializationType = "<#= Model.SourceEnd.Name #>";
+
+        public <#=AssociationSourceEndClassName #>(IAssociationEnd associationEnd, <#= ClassName #> association) : base(associationEnd, association)
+        {
+        }
+<# if (Model.TargetEnd.MenuOptions?.MappingOptions.Any() != true && Model.SourceEnd.MenuOptions?.MappingOptions.Any() == true) { #>
+        
+        public IEnumerable<IElementToElementMapping> Mappings => _associationEnd.Mappings;
+<# } #>
+<#  if (Model.SourceEnd.MenuOptions != null) {
+        foreach(var creationOption in Model.SourceEnd.MenuOptions.ElementCreations) { #>
+        public <#= creationOption.ApiModelName.FormatForCollection(creationOption.AllowMultiple()) #> <#= creationOption.GetCreationOptionName() #> => InternalElement.ChildElements
+            .GetElementsOfType(<#= creationOption.ApiModelName #>.SpecializationTypeId)
+            .Select(x => new <#= creationOption.ApiModelName #>(x))
+<#          if (creationOption.GetOptionSettings().AllowMultiple()) { #>
+            .ToList();
+<#          } else { #>
+            .SingleOrDefault();
+<#          } #>
+
+<#      } #>
+<#  } #>
+    }
+
+    [IntentManaged(Mode.Fully)]
+    public class <#=AssociationTargetEndClassName #> : <#=AssociationEndClassName #>
+    {
+        public const string SpecializationTypeId = "<#= Model.TargetEnd.Id #>";
+        public const string SpecializationType = "<#= Model.TargetEnd.Name #>";
+
+        public <#=AssociationTargetEndClassName #>(IAssociationEnd associationEnd, <#= ClassName #> association) : base(associationEnd, association)
+        {
+        }
+<#  if (Model.TargetEnd.MenuOptions != null) {
+        foreach(var creationOption in Model.TargetEnd.MenuOptions.ElementCreations) { #>
+        public <#= creationOption.ApiModelName.FormatForCollection(creationOption.AllowMultiple()) #> <#= creationOption.GetCreationOptionName() #> => InternalElement.ChildElements
+            .GetElementsOfType(<#= creationOption.ApiModelName #>.SpecializationTypeId)
+            .Select(x => new <#= creationOption.ApiModelName #>(x))
+<#          if (creationOption.GetOptionSettings().AllowMultiple()) { #>
+            .ToList();
+<#          } else { #>
+            .SingleOrDefault();
+<#          } #>
+
+<#      } #>
+<#  } #>
+<# if (Model.TargetEnd.MenuOptions?.MappingOptions.Any() == true && Model.SourceEnd.MenuOptions?.MappingOptions.Any() != true) { #>
+        
+        public IEnumerable<IElementToElementMapping> Mappings => _associationEnd.Mappings;
+<# } #>
+    }
+
+    [IntentManaged(Mode.Fully)]
+    public class <#=AssociationEndClassName #> : ITypeReference, IMetadataModel, IHasName, IHasStereotypes, IElementWrapper
+    {
+        protected readonly IAssociationEnd _associationEnd;
+        private readonly <#= ClassName #> _association;
+
+        public <#=AssociationEndClassName #>(IAssociationEnd associationEnd, <#= ClassName #> association)
+        {
+            _associationEnd = associationEnd;
+            _association = association;
+        }
+
+        public static <#=AssociationEndClassName #> Create(IAssociationEnd associationEnd)
+        {
+            var association = new <#= ClassName #>(associationEnd.Association);
+            return association.TargetEnd.Id == associationEnd.Id ? (<#=AssociationEndClassName #>) association.TargetEnd : association.SourceEnd;
+        }
+
+        public string Id => _associationEnd.Id;
+        public string SpecializationType => _associationEnd.SpecializationType;
+        public string SpecializationTypeId => _associationEnd.SpecializationTypeId;
+        public string Name => _associationEnd.Name;
+        public <#= ClassName #> Association => _association;
+        public IElement InternalElement => _associationEnd;
+        public IAssociationEnd InternalAssociationEnd => _associationEnd;
+        public IAssociation InternalAssociation => _association.InternalAssociation;
+        public bool IsNavigable => _associationEnd.IsNavigable;
+        public bool IsNullable => _associationEnd.TypeReference.IsNullable;
+        public bool IsCollection => _associationEnd.TypeReference.IsCollection;
+        public ICanBeReferencedType Element => _associationEnd.TypeReference.Element;
+        public IEnumerable<ITypeReference> GenericTypeParameters => _associationEnd.TypeReference.GenericTypeParameters;
+        public ITypeReference TypeReference => this;
+        public IPackage Package => Element?.Package;
+        public string Comment => _associationEnd.Comment;
+        public IEnumerable<IStereotype> Stereotypes => _associationEnd.Stereotypes;
+<# if (Model.TargetEnd.MenuOptions?.MappingOptions.Any() == true && Model.SourceEnd.MenuOptions?.MappingOptions.Any() == true) { #>
+        public IEnumerable<IElementToElementMapping> Mappings => _associationEnd.Mappings;
+<# } #>
+
+        public <#=AssociationEndClassName #> OtherEnd()
+        {
+            return this.Equals(_association.SourceEnd) ? (<#=AssociationEndClassName #>)_association.TargetEnd : (<#=AssociationEndClassName #>)_association.SourceEnd;
+        }
+
+        public bool IsTargetEnd()
+        {
+            return _associationEnd.IsTargetEnd();
+        }
+
+        public bool IsSourceEnd()
+        {
+            return _associationEnd.IsSourceEnd();
+        }
+        
+        public override string ToString()
+        {
+            return _associationEnd.ToString();
+        }
+
+        public bool Equals(<#=AssociationEndClassName #> other)
+        {
+            return Equals(_associationEnd, other._associationEnd);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((<#=AssociationEndClassName #>)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (_associationEnd != null ? _associationEnd.GetHashCode() : 0);
+        }
+    }
+
+    [IntentManaged(Mode.Fully)]
+    public static class <#=AssociationEndClassName #>Extensions
+    {
+        public static bool Is<#=AssociationEndClassName #>(this ICanBeReferencedType type)
+        {
+            return Is<#=AssociationTargetEndClassName #>(type) || Is<#=AssociationSourceEndClassName #>(type);
+        }
+
+        public static <#=AssociationEndClassName #> As<#=AssociationEndClassName #>(this ICanBeReferencedType type)
+        {
+            return (<#=AssociationEndClassName #>) type.As<#=AssociationTargetEndClassName #>() ?? (<#=AssociationEndClassName #>)type.As<#=AssociationSourceEndClassName #>();
+        }
+
+        public static bool Is<#=AssociationTargetEndClassName #>(this ICanBeReferencedType type)
+        {
+            return type != null && type is IAssociationEnd associationEnd && associationEnd.SpecializationTypeId == <#=AssociationTargetEndClassName #>.SpecializationTypeId;
+        }
+
+        public static <#=AssociationTargetEndClassName #> As<#=AssociationTargetEndClassName #>(this ICanBeReferencedType type)
+        {
+            return type.Is<#=AssociationTargetEndClassName #>() ? new <#= ClassName #>(((IAssociationEnd)type).Association).TargetEnd : null;
+        }
+
+        public static bool Is<#=AssociationSourceEndClassName #>(this ICanBeReferencedType type)
+        {
+            return type != null && type is IAssociationEnd associationEnd && associationEnd.SpecializationTypeId == <#=AssociationSourceEndClassName #>.SpecializationTypeId;
+        }
+
+        public static <#=AssociationSourceEndClassName #> As<#=AssociationSourceEndClassName #>(this ICanBeReferencedType type)
+        {
+            return type.Is<#=AssociationSourceEndClassName #>() ? new <#= ClassName #>(((IAssociationEnd)type).Association).SourceEnd : null;
+        }
+    }
+}

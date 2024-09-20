@@ -1,0 +1,54 @@
+<#@ template language="C#" inherits="CSharpTemplateBase<Intent.ModuleBuilder.Api.AssociationSettingsModel>" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="Intent.Modules.Common" #>
+<#@ import namespace="Intent.Modules.Common.Templates" #>
+<#@ import namespace="Intent.Modules.Common.CSharp.Templates" #>
+<#@ import namespace="Intent.Templates" #>
+<#@ import namespace="Intent.Metadata.Models" #>
+<#@ import namespace="Intent.ModuleBuilder.Api" #>
+using System.Collections.Generic;
+using System.Linq;
+
+[assembly: DefaultIntentManaged(Mode.Fully)]
+
+namespace <#= Namespace #>
+{
+    public static class <#= ClassName #>
+    {
+<#  foreach(var targetType in Model.SourceEnd.TargetTypes()) {  #>
+        [IntentManaged(Mode.Fully)]
+        public static IList<<#= Model.TargetEnd.ApiModelName #>> <#= Model.TargetEnd.ApiPropertyName #>(this <#= targetType.GetApiModelName() #> model)
+        {
+            return model.InternalElement.AssociatedElements
+                .Where(x => x.Association.SpecializationType == <#= Model.ApiModelName #>.SpecializationType && x.IsTargetEnd())
+                .Select(x => <#= Model.ApiModelName #>.CreateFromEnd(x).TargetEnd)
+                .ToList();
+        }
+
+<#  }  #>
+<#  foreach(var targetType in Model.TargetEnd.TargetTypes()) {  #>
+        [IntentManaged(Mode.Fully)]
+        public static IList<<#= Model.SourceEnd.ApiModelName #>> <#= Model.SourceEnd.ApiPropertyName #>(this <#= targetType.GetApiModelName() #> model)
+        {
+            return model.InternalElement.AssociatedElements
+                .Where(x => x.Association.SpecializationType == <#= Model.ApiModelName #>.SpecializationType && x.IsSourceEnd())
+                .Select(x => <#= Model.ApiModelName #>.CreateFromEnd(x).SourceEnd)
+                .ToList();
+        }
+
+<#  }  #>
+<#  foreach(var targetType in Model.TargetEnd.TargetTypes().Intersect(Model.SourceEnd.TargetTypes())) {  #>
+        [IntentManaged(Mode.Fully)]
+        public static IList<<#= Model.Name.ToCSharpIdentifier() #>EndModel> <#= Model.Name.ToCSharpIdentifier() #>Ends(this <#= targetType.GetApiModelName() #> model)
+        {
+            return model.InternalElement.AssociatedElements
+                .Where(x => x.Is<#= Model.Name.ToCSharpIdentifier() #>EndModel())
+                .Select(<#= Model.Name.ToCSharpIdentifier() #>EndModel.Create)
+                .ToList();
+        }
+
+<#  }  #>
+    }
+}

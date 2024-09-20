@@ -1,0 +1,47 @@
+<#@ template language="C#" inherits="CSharpTemplateBase<TemplateRegistrationModel>" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="Intent.Modules.Common.Templates" #>
+<#@ import namespace="Intent.Modules.Common.CSharp.Templates" #>
+<#@ import namespace="Intent.Metadata.Models" #>
+<#@ import namespace="Intent.ModuleBuilder.Api" #>
+<#@ import namespace="Intent.ModuleBuilder.Helpers" #>
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Intent.Metadata.Models;
+using Intent.Modules.Common;
+using Intent.Modules.Common.Registrations;
+using Intent.RoslynWeaver.Attributes;
+using Intent.Engine;
+using Intent.Templates;
+
+[assembly: DefaultIntentManaged(Mode.Fully)]
+
+namespace <#= Namespace #>
+{
+    [IntentManaged(Mode.Merge, Body = Mode.Merge, Signature = Mode.Fully)]
+    public class <#= ClassName #> : SingleFileListModelTemplateRegistration<<#= GetModelType() #>>
+    {
+        private readonly IMetadataManager _metadataManager;
+
+        public <#= ClassName #>(IMetadataManager metadataManager)
+        {
+            _metadataManager = metadataManager;
+        }
+
+        public override string TemplateId =>  <#= GetTemplateNameForTemplateId() #>.TemplateId;
+
+        [IntentManaged(Mode.Fully)]
+        public override ITemplate CreateTemplateInstance(IOutputTarget outputTarget, IList<<#= GetModelType() #>> model)
+        {
+            return new <#= GetTemplateNameForTemplateId() #>(outputTarget, model);
+        }
+
+        [IntentManaged(Mode.Merge, Body = Mode.Ignore, Signature = Mode.Fully)]
+        public override IList<<#= GetModelType() #>> GetModels(IApplication application)
+        {
+            return <#= GetModelsMethod() #>.ToList();
+        }
+    }
+}
