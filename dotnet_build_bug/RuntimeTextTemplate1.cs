@@ -18,7 +18,7 @@ namespace dotnet_build_bug
     /// Class to produce the template output
     /// </summary>
     
-    #line 1 "D:\Dev\Spikes\VS\dotnet_build_bug\dotnet_build_bug\RuntimeTextTemplate1.tt"
+    #line 1 "/Dev/Spikes/VS/dotnet_build_bug/dotnet_build_bug/RuntimeTextTemplate1.tt"
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "17.0.0.0")]
     public partial class RuntimeTextTemplate1 : RuntimeTextTemplate1Base
     {
@@ -29,7 +29,7 @@ namespace dotnet_build_bug
         public virtual string TransformText()
         {
             
-            #line 6 "D:\Dev\Spikes\VS\dotnet_build_bug\dotnet_build_bug\RuntimeTextTemplate1.tt"
+            #line 6 "/Dev/Spikes/VS/dotnet_build_bug/dotnet_build_bug/RuntimeTextTemplate1.tt"
  uncompilable code 
             
             #line default
